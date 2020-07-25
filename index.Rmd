@@ -16,13 +16,14 @@ library(flexdashboard)
 #install.packages("devtools")
 #devtools::install_github("RamiKrispin/coronavirus", force = TRUE)
 
-library(coronavirus)
-data(coronavirus)
-#coronavirus_df <- read.csv("https://raw.githubusercontent.com/RamiKrispin/coronavirus/master/csv/coronavirus.csv", stringsAsFactors = FALSE)
-#coronavirus_df$date <- as.Date(coronavirus_df$date)
+#library(coronavirus)
+#update_dataset()
+#data(coronavirus)
+coronavirus <- read.csv("https://raw.githubusercontent.com/RamiKrispin/coronavirus/master/csv/coronavirus.csv", stringsAsFactors = FALSE)
+coronavirus$date <- as.Date(coronavirus$date)
 
 # coronavirus_df <- coronavirus %>%
-#           dplyr::filter(country == "Romania"|country == "Hungary"|country == "Greece"|country == "Sweden")
+#            dplyr::filter(country == "Romania"|country == "Hungary"|country == "Greece"|country == "Sweden")
 
 # View(coronavirus)
 # max(coronavirus$date)
@@ -172,24 +173,9 @@ plotly::plot_ly(data = df_daily) %>%
     ay = -90
   ) %>%
   plotly::add_annotations(
-    x = as.Date("2020-03-11"),
-    y = 3,
+    x = as.Date("2020-03-22"),
+    y = 22,
     text = paste("First death"),
-    xref = "x",
-    yref = "y",
-    arrowhead = 5,
-    arrowhead = 3,
-    arrowsize = 1,
-    showarrow = TRUE,
-    ax = -90,
-    ay = -90
-  ) %>%
-  plotly::add_annotations(
-    x = as.Date("2020-03-18"),
-    y = 14,
-    text = paste(
-      "Lockdown"
-    ),
     xref = "x",
     yref = "y",
     arrowhead = 5,
@@ -198,6 +184,36 @@ plotly::plot_ly(data = df_daily) %>%
     showarrow = TRUE,
     ax = -10,
     ay = -90
+  ) %>%
+  plotly::add_annotations(
+    x = as.Date("2020-03-14"),
+    y = 22,
+    text = paste(
+      "Lockdown - State of emergency"
+    ),
+    xref = "x",
+    yref = "y",
+    arrowhead = 5,
+    arrowhead = 3,
+    arrowsize = 1,
+    showarrow = TRUE,
+    ax = -10,
+    ay = -120
+  ) %>%
+  plotly::add_annotations(
+    x = as.Date("2020-05-15"),
+    y = 20,
+    text = paste(
+      "State of alert"
+    ),
+    xref = "x",
+    yref = "y",
+    arrowhead = 5,
+    arrowhead = 3,
+    arrowsize = 1,
+    showarrow = TRUE,
+    ax = -10,
+    ay = -120
   ) %>%
   plotly::layout(
     title = "",
