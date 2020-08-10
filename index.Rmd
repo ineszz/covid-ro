@@ -409,11 +409,11 @@ About
 
 **The Coronavirus Dashboard: the case of Romania**
 
-This [Coronavirus dashboard: the case of Romania](https://www.antoinesoetewey.com/files/coronavirus-dashboard.html) provides an overview of the 2019 Novel Coronavirus COVID-19 (2019-nCoV) epidemic for Romania. This dashboard is built with R using the R Markdown framework and was adapted from this [dashboard](https://ramikrispin.github.io/coronavirus_dashboard/){target="_blank"} by Rami Krispin.
+This [Coronavirus dashboard: the case of Romania](https://www.antoinesoetewey.com/files/coronavirus-dashboard.html) provides an overview of the Coronavirus COVID-19 (2019-nCoV) epidemic for Romania. <br>This dashboard is built with R using the R Markdown framework and was adapted from this [dashboard](https://ramikrispin.github.io/coronavirus_dashboard/){target="_blank"} by Rami Krispin.
 
 **Code**
 
-The code behind this dashboard is available on [GitHub](https://github.com/AntoineSoetewey/coronavirus_dashboard){target="_blank"}.
+The starting code behind this dashboard is available on [GitHub](https://github.com/AntoineSoetewey/coronavirus_dashboard){target="_blank"}.
 
 **Data**
 
@@ -432,10 +432,10 @@ The raw data is pulled from the Johns Hopkins University Center for Systems Scie
 
 More information about this dashboard (and how to replicate it for your own country) can be found in this [article](https://www.statsandr.com/blog/how-to-create-a-simple-coronavirus-dashboard-specific-to-your-country-in-r/).
 
-**Update**
+**Latest Update**
 
 The data is as of `r format(max(coronavirus$date), "%A %B %d, %Y")` and the dashboard has been updated on `r format(Sys.time(), "%A %B %d, %Y")`.
 
 <br>
 
-*Go back to [www.statsandr.com](https://www.statsandr.com/) (blog) or [www.antoinesoetewey.com](https://www.antoinesoetewey.com/) (personal website)*.
+*Go to [my personal website](https://www.ineszz.rbind.io/) for other ideas*.
