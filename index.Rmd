@@ -3,7 +3,7 @@ title: covid-2020-Romania
 
 output: 
   flexdashboard::flex_dashboard:
-    orientation: rows
+    orientation: columns
     source_code: embed
     vertical_layout: fill
     theme: bootstrap
@@ -16,19 +16,8 @@ library(flexdashboard)
 #install.packages("devtools")
 #devtools::install_github("RamiKrispin/coronavirus", force = TRUE)
 
-#library(coronavirus)
-#update_dataset()
-#data(coronavirus)
-coronavirus <- read.csv("https://raw.githubusercontent.com/RamiKrispin/coronavirus/master/csv/coronavirus.csv", stringsAsFactors = FALSE)
-coronavirus$date <- as.Date(coronavirus$date)
-
-# coronavirus_df <- coronavirus %>%
-#            dplyr::filter(country == "Romania"|country == "Hungary"|country == "Greece"|country == "Sweden")
-
-# View(coronavirus)
-# max(coronavirus$date)
-
 `%>%` <- magrittr::`%>%`
+
 #------------------ Parameters ------------------
 # Set colors
 # https://www.w3.org/TR/css-color-3/#svg-color
@@ -36,16 +25,27 @@ confirmed_color <- "purple"
 active_color <- "#1f77b4"
 recovered_color <- "forestgreen"
 death_color <- "red"
+
 #------------------ Data ------------------
+#data(coronavirus)
+coronavirus <- read.csv("https://raw.githubusercontent.com/RamiKrispin/coronavirus/master/csv/coronavirus.csv", stringsAsFactors = FALSE)
+coronavirus$date <- as.Date(coronavirus$date)
+
+coronavirus <- coronavirus %>%
+dplyr::filter(country == "Romania" |
+    country == "Greece" |
+    country == "Hungary" |
+    country == "Sweden")
+
+#------------------ Data Preparation ------------------
 df <- coronavirus %>%
   dplyr::filter(country == "Romania") %>%
   dplyr::group_by(country, type) %>%
   dplyr::summarise(total = sum(cases)) %>%
   tidyr::pivot_wider(
-    names_from = type,
-    values_from = total
-  ) %>%
-  dplyr::mutate(unrecovered = confirmed - ifelse(is.na(death), 0, death)) %>%
+          names_from = type,
+          values_from = total) %>%
+  dplyr::mutate(unrecovered = confirmed - ifelse(is.na(death), 0,death)-ifelse(is.na(recovered), 0, recovered)) %>%
   dplyr::arrange(-confirmed) %>%
   dplyr::ungroup()
 
@@ -59,20 +59,52 @@ df_daily <- coronavirus %>%
   ) %>%
   dplyr::arrange(date) %>%
   dplyr::ungroup() %>%
-  dplyr::mutate(active = confirmed - death ) %>%
+  dplyr::mutate(active = confirmed - death) %>%
   dplyr::mutate(
-    confirmed_cum = cumsum(confirmed),
-    death_cum = cumsum(death),
-    recovered_cum = cumsum(recovered),
-    active_cum = cumsum(active)
-  )
+          confirmed_cum = cumsum(confirmed),
+          death_cum = cumsum(death),
+          recovered_cum = cumsum(recovered),
+          active_cum = cumsum(active),
+          daily_confirmed_5D = round((confirmed +
+                                    dplyr::lag(confirmed, n = 1) +
+                                    dplyr::lag(confirmed, n = 2) +
+                                    dplyr::lag(confirmed, n = 3) +
+                                    dplyr::lag(confirmed, n = 4))/5,digits = 0),
+          daily_confirmed_7D = round((confirmed +
+                                    dplyr::lag(confirmed, n = 1) +
+                                    dplyr::lag(confirmed, n = 2) +
+                                    dplyr::lag(confirmed, n = 3) +
+                                    dplyr::lag(confirmed, n = 4) +
+                                    dplyr::lag(confirmed, n = 5) +
+                                    dplyr::lag(confirmed, n = 6))/7,digits = 0),
+          daily_confirmed_14D = round((confirmed +
+                                    dplyr::lag(confirmed, n = 1) +
+                                    dplyr::lag(confirmed, n = 2) +
+                                    dplyr::lag(confirmed, n = 3) +
+                                    dplyr::lag(confirmed, n = 4) +
+                                    dplyr::lag(confirmed, n = 5) +
+                                    dplyr::lag(confirmed, n = 6) +
+                                    dplyr::lag(confirmed, n = 7) +
+                                    dplyr::lag(confirmed, n = 8) +
+                                    dplyr::lag(confirmed, n = 9) +
+                                    dplyr::lag(confirmed, n = 10) +
+                                    dplyr::lag(confirmed, n = 11) +
+                                    dplyr::lag(confirmed, n = 12) +
+                                    dplyr::lag(confirmed, n = 13))/14,digits = 0)
+          ) %>% 
+    dplyr::mutate(
+      recover_rate = round((recovered /confirmed), digits = 4),
+      death_rate = round((death / confirmed),digits = 4)
+      )
+df_daily <-df_daily %>% dplyr::arrange(desc(date))
+                         
 df1 <- coronavirus %>% dplyr::filter(date == max(date))
+
 ```
 
-Summary
+Sumar
 =======================================================================
-
-Row {data-width=400}
+Column {data-width=25}
 -----------------------------------------------------------------------
 
 ### confirmed {.value-box}
@@ -80,12 +112,11 @@ Row {data-width=400}
 ```{r}
 valueBox(
   value = paste(format(sum(df$confirmed), big.mark = ","), "", sep = " "),
-  caption = "Total confirmed cases",
+  caption = "Total cazuri confirmate",
   icon = "fas fa-user-md",
   color = confirmed_color
 )
 ```
-
 
 ### active {.value-box} 
 
@@ -96,11 +127,10 @@ round(100 * sum(df$unrecovered, na.rm = TRUE) / sum(df$confirmed), 1),
 "%)",
 sep = "" 
 ), 
-caption = "Active cases (% of total cases)", icon = "fas fa-bed", 
+caption = "Cazuri active (% of total cazuri)", icon = "fas fa-bed", 
  color = active_color 
  ) 
 ```
-
 
 ### death {.value-box}
 
@@ -111,7 +141,7 @@ valueBox(
     "%)",
     sep = ""
   ),
-  caption = "Death cases (death rate)",
+  caption = "Cazuri deces (rata deces)",
   icon = "fas fa-frown",
   color = death_color
 )
@@ -126,26 +156,76 @@ valueBox(
     "%)",
     sep = ""
   ),
-  caption = "Recovered cases (Recovery rate)",
+  caption = "Cazuri vindecati (rata de vindecare)",
   icon = "fas fa-user-check",
   color = recovered_color
 )
 ```
 
-Row
+Column {.tabset} 
 -----------------------------------------------------------------------
 
-### **Daily cumulative cases by type** (Romania only)
-    
+### Evolutie cazuri noi
+
+```{r}
+plotly::plot_ly(data = df_daily,
+                x = ~ date,
+                y= ~ confirmed,
+                type = "scatter",
+                mode = "markers",
+                name = "Confirmati") %>%
+  plotly::add_lines(x = ~ date, 
+                    y = ~ daily_confirmed_14D,
+                    line = list(color = "grey", width = 1),
+                    name = "trend 14 zile") %>%
+    plotly::add_lines(x = ~ date, 
+                    y = ~ daily_confirmed_7D,
+                    line = list(color = "maroon", width = 1),
+                    name = "trend 7 zile") %>%
+      plotly::add_lines(x = ~ date, 
+                    y = ~ daily_confirmed_5D,
+                    line = list(color = "red", width = 2),
+                    name = "trend 5 zile") %>%
+  plotly::layout(title = "",
+                 legend = list(x = 0.6, y = 0.9),
+                 yaxis = list(title = "Number of Cases"),
+                 xaxis = list(title = "Utilizarea mediei mobile pe 5, 7 and 14 zile pentru a evalua trendul"),
+                 hovermode = "compare")
+```
+
+### Distributia cazurile totale
+
+```{r}
+plotly::plot_ly(data = df_daily,
+        x = ~ date,
+        y = ~ confirmed_cum, 
+        name = 'Activi', 
+        fillcolor = 'blue',
+        type = 'scatter',
+        mode = 'none', 
+        stackgroup = 'one') %>%
+  plotly::add_trace( y = ~ death_cum,
+             name = "Decedati",
+             fillcolor = '#E41317') %>%
+  plotly::add_trace(y = ~recovered_cum,
+            name = 'Vindecati',
+            fillcolor = 'forestgreen') %>%
+  plotly::layout(title = "",
+         legend = list(x = 0.1, y = 0.9),
+         yaxis = list(title = "Cazuri confirmate"),
+         xaxis = list(title = "Sursa: COVID package, JHU CCSE"),
+         hovermode = "compared")
+```
+
+### Evolutia cumulativa a cazurilor confirmate
+
 ```{r}
 plotly::plot_ly(data = df_daily) %>%
   plotly::add_trace(
     x = ~date,
-    # y = ~active_cum,
     y = ~confirmed_cum,
     type = "scatter",
     mode = "lines+markers",
-    # name = "Active",
     name = "Confirmed",
     line = list(color = active_color),
     marker = list(color = active_color)
@@ -175,7 +255,7 @@ plotly::plot_ly(data = df_daily) %>%
   plotly::add_annotations(
     x = as.Date("2020-03-22"),
     y = 22,
-    text = paste("First death"),
+    text = paste("Primul deces"),
     xref = "x",
     yref = "y",
     arrowhead = 5,
@@ -189,7 +269,7 @@ plotly::plot_ly(data = df_daily) %>%
     x = as.Date("2020-03-14"),
     y = 22,
     text = paste(
-      "Lockdown - State of emergency"
+      "Lockdown - Stare Urgenta"
     ),
     xref = "x",
     yref = "y",
@@ -204,7 +284,7 @@ plotly::plot_ly(data = df_daily) %>%
     x = as.Date("2020-05-15"),
     y = 20,
     text = paste(
-      "State of alert"
+      "Stare de alerta"
     ),
     xref = "x",
     yref = "y",
@@ -212,27 +292,58 @@ plotly::plot_ly(data = df_daily) %>%
     arrowhead = 3,
     arrowsize = 1,
     showarrow = TRUE,
-    ax = -10,
+    ax = -20,
     ay = -120
+  ) %>%
+    plotly::add_annotations(
+    x = as.Date("2020-08-02"),
+    y = 90,
+    text = paste(
+      "Masuri Noi"
+    ),
+    xref = "x",
+    yref = "y",
+    arrowhead = 5,
+    arrowhead = 3,
+    arrowsize = 1,
+    showarrow = TRUE,
+    ax = -20,
+    ay = -150
   ) %>%
   plotly::layout(
     title = "",
-    yaxis = list(title = "Cumulative number of cases"),
+    yaxis = list(title = "Numar de cazuri cumulativ"),
     xaxis = list(title = "Date"),
     legend = list(x = 0.1, y = 0.9),
     hovermode = "compare"
   )
 ```
 
-Comparison
+
+### Sursa date
+    
+```{r}
+df_daily %>%
+  DT::datatable(rownames = FALSE,
+            class = 'cell-border stripe',
+            colnames = c("Date", "Confirmed", "Recovered", "Death","Daily_confirmed_5D","Daily_confirmed_7D","Daily_confirmed_14D", "Recovery Rate", "Death Rate"),
+            options = list(dom = 'Blfrtip',
+                           searchHighlight = TRUE, 
+                           pageLength = 8,
+                           buttons = c('copy', 'csv')),
+            caption = htmltools::tags$caption(style = 'caption-side: bottom; text-align: center;','Sursa tabel: JHU CCSE.')) %>%
+  DT::formatPercentage("recover_rate", 2) %>%
+  DT::formatPercentage("death_rate", 2)  
+```
+
+
+Comparatii
 =======================================================================
 
-
-Column Column {.tabset}
+Column {.tabset}
 -------------------------------------
 
-
-### **Daily new confirmed cases**
+### **Cazuri confirmate zilnic - tari vecine sau cu risc**
     
 ```{r}
 daily_confirmed <- coronavirus %>%
@@ -259,34 +370,29 @@ daily_confirmed %>%
     y = ~Hungary,
     type = "scatter",
     mode = "lines+markers",
-    name = "Hungary"
+    name = "Ungaria"
   ) %>%
   plotly::add_trace(
     x = ~date,
     y = ~Greece,
     type = "scatter",
     mode = "lines+markers",
-    name = "Greece"
+    name = "Grecia"
   ) %>%
   plotly::add_trace(
     x = ~date,
     y = ~Sweden,
     type = "scatter",
     mode = "lines+markers",
-    name = "Sweden"
+    name = "Suedia"
   ) %>%
   plotly::layout(
     title = "",
     legend = list(x = 0.1, y = 0.9),
-    yaxis = list(title = "New confirmed cases"),
-    xaxis = list(title = "Date"),
-    # paper_bgcolor = "black",
-    # plot_bgcolor = "black",
-    # font = list(color = 'white'),
+    yaxis = list(title = "Cazuri noi confirmate"),
+    xaxis = list(title = "Data"),
     hovermode = "compare",
     margin = list(
-      # l = 60,
-      # r = 40,
       b = 10,
       t = 10,
       pad = 2
@@ -294,53 +400,41 @@ daily_confirmed %>%
   )
 ```
  
-### **Cases distribution by type**
+### **Distributia cazurilor dupa tipul lor**
 
-```{r daily_summary}
+```{r}
 df_EU <- coronavirus %>%
-  # dplyr::filter(date == max(date)) %>%
-  dplyr::filter(country == "Romania" |
-    country == "Greece" |
-    country == "Hungary" |
-    country == "Sweden") %>%
   dplyr::group_by(country, type) %>%
   dplyr::summarise(total = sum(cases)) %>%
   tidyr::pivot_wider(
     names_from = type,
     values_from = total
   ) %>%
-  # dplyr::mutate(unrecovered = confirmed - ifelse(is.na(recovered), 0, recovered) - ifelse(is.na(death), 0, death)) %>%
-  dplyr::mutate(unrecovered = confirmed - ifelse(is.na(death), 0, death)) %>%
+  dplyr::mutate(unrecovered = confirmed - ifelse(is.na(recovered), 0, recovered) - ifelse(is.na(death), 0, death)) %>%
   dplyr::arrange(confirmed) %>%
   dplyr::ungroup() %>%
   dplyr::mutate(country = trimws(country)) %>%
   dplyr::mutate(country = factor(country, levels = country))
+
 plotly::plot_ly(
   data = df_EU,
   x = ~country,
-  # y = ~unrecovered,
   y = ~ confirmed,
-  # text =  ~ confirmed,
-  # textposition = 'auto',
   type = "bar",
-  name = "Confirmed",
+  name = "Confirmati",
   marker = list(color = active_color)
 ) %>%
   plotly::add_trace(
     y = ~death,
-    # text =  ~ death,
-    # textposition = 'auto',
-    name = "Death",
+    name = "Decedati",
     marker = list(color = death_color)
   ) %>%
   plotly::layout(
     barmode = "stack",
-    yaxis = list(title = "Total cases"),
+    yaxis = list(title = "Total Cazuri"),
     xaxis = list(title = ""),
     hovermode = "compare",
     margin = list(
-      # l = 60,
-      # r = 40,
       b = 10,
       t = 10,
       pad = 2
@@ -349,10 +443,10 @@ plotly::plot_ly(
 ```
 
 
-Map
+Harta
 =======================================================================
 
-### **World map of cases** (*use + and - icons to zoom in/out*)
+### ** Cazuri in lume** (*foloseste iconitele + sau - pentru zoom in/out | sectiune wip*)
 
 ```{r}
 # map tab added by Art Steinmetz
@@ -360,7 +454,6 @@ library(leaflet)
 library(leafpop)
 library(purrr)
 cv_data_for_plot <- coronavirus %>%
-  #dplyr::filter(country == "Romania") %>%
   dplyr::filter(cases > 0) %>%
   dplyr::group_by(country, province, lat, long, type) %>%
   dplyr::summarise(cases = sum(cases)) %>%
@@ -375,7 +468,6 @@ names(cv_data_for_plot.split) %>%
       addCircleMarkers(
         data = cv_data_for_plot.split[[df]],
         lng = ~long, lat = ~lat,
-        #                 label=~as.character(cases),
         color = ~ pal(type),
         stroke = FALSE,
         fillOpacity = 0.8,
@@ -386,7 +478,6 @@ names(cv_data_for_plot.split) %>%
           zcol = c("type", "cases", "country", "province")
         ),
         group = df,
-        #                 clusterOptions = markerClusterOptions(removeOutsideVisibleBounds = F),
         labelOptions = labelOptions(
           noHide = F,
           direction = "auto"
@@ -404,38 +495,34 @@ map_object %>%
 
 
 
-About
+Despre
 =======================================================================
 
-**The Coronavirus Dashboard: the case of Romania**
+Acest dashboard este o replica inspirata de [articolul](https://www.statsandr.com/blog/how-to-create-a-simple-coronavirus-dashboard-specific-to-your-country-in-r/){target="_blank"} lui [Antoine Soetewey](https://www.antoinesoetewey.com).
 
-This [Coronavirus dashboard: the case of Romania](https://www.antoinesoetewey.com/files/coronavirus-dashboard.html) provides an overview of the Coronavirus COVID-19 (2019-nCoV) epidemic for Romania. <br>This dashboard is built with R using the R Markdown framework and was adapted from this [dashboard](https://ramikrispin.github.io/coronavirus_dashboard/){target="_blank"} by Rami Krispin.
+
+Ulterior, dashboardurile dezvoltate de [Rami Krispin](https://ramikrispin.github.io/coronavirus_dashboard/){target="_blank"}, cat si pachetele de date COVID-19 au reprezentat un punct de explorare al pachetului R ['{flexdashboard}'](http://rmarkdown.rstudio.com/flexdashboard).
 
 **Code**
 
-The starting code behind this dashboard is available on [GitHub](https://github.com/AntoineSoetewey/coronavirus_dashboard){target="_blank"}.
+Codul este scris folosind R si frameworkul RMarkdown, disponibil pe github.
 
 **Data**
 
-The input data for this dashboard is the dataset available from the [`{coronavirus}`](https://github.com/RamiKrispin/coronavirus){target="_blank"} R package. Make sure to download the development version of the package to have the latest data:
+Momentan folosesc datele disponibile in pachetul de dezvoltare, dar initial s-au folosit date de intrare din pachetul R [`{coronavirus}`](https://github.com/RamiKrispin/coronavirus){target="_blank"}. 
 
 ```
 install.packages("devtools")
 devtools::install_github("RamiKrispin/coronavirus")
 ```
 
-The data and dashboard are refreshed on a daily basis.
+Datele brute au sursa datele de la Johns Hopkins University Center for Systems Science and Engineering (JHU CCSE) Coronavirus.
+Acestea sunt actualizate zilnic, dar acest dashboard se actualizeaza la cateva zile, manual.
 
-The raw data is pulled from the Johns Hopkins University Center for Systems Science and Engineering (JHU CCSE) Coronavirus [repository](https://github.com/RamiKrispin/coronavirus-csv){target="_blank"}.
 
-**Information**
+**Ultimul update**
 
-More information about this dashboard (and how to replicate it for your own country) can be found in this [article](https://www.statsandr.com/blog/how-to-create-a-simple-coronavirus-dashboard-specific-to-your-country-in-r/).
-
-**Latest Update**
-
-The data is as of `r format(max(coronavirus$date), "%A %B %d, %Y")` and the dashboard has been updated on `r format(Sys.time(), "%A %B %d, %Y")`.
-
+Date disponibile din `r format(max(coronavirus$date), "%A %B %d, %Y")`. Dashboardul a fost actualizat ultima oara:`r format(Sys.time(), "%A %B %d, %Y")`.
 <br>
 
-*Go to [my personal website](https://www.ineszz.rbind.io/) for other ideas*.
+Pentru alte proiecte de R, ma gasesti pe [pagina mea personala](https://www.ineszz.rbind.io/).
