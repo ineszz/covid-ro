@@ -3,7 +3,7 @@ title: covid-2020-Romania
 
 output: 
   flexdashboard::flex_dashboard:
-    orientation: columns
+    orientation: rows
     source_code: embed
     vertical_layout: fill
     theme: bootstrap
@@ -103,8 +103,8 @@ df1 <- coronavirus %>% dplyr::filter(date == max(date))
 ```
 
 Sumar
-=======================================================================
-Column {data-width=25}
+====
+Row
 -----------------------------------------------------------------------
 
 ### confirmed {.value-box}
@@ -320,20 +320,22 @@ plotly::plot_ly(data = df_daily) %>%
 ```
 
 
-### Sursa date
+Sursa date
+===
     
 ```{r}
 df_daily %>%
   DT::datatable(rownames = FALSE,
             class = 'cell-border stripe',
-            colnames = c("Date", "Confirmed", "Recovered", "Death","Daily_confirmed_5D","Daily_confirmed_7D","Daily_confirmed_14D", "Recovery Rate", "Death Rate"),
-            options = list(dom = 'Blfrtip',
-                           searchHighlight = TRUE, 
-                           pageLength = 8,
+            colnames = c("Date", "Confirmed", "Recovered", "Death","Daily_confirmed_5D","Daily_confirmed_7D","Daily_confirmed_14D", "Recover Rate", "Death Rate"),
+            options = list(autowidth = TRUE,
+                           dom = 'Blfrtip',
+                           searchHighlight = TRUE,
+                           pageLength = 14,
                            buttons = c('copy', 'csv')),
             caption = htmltools::tags$caption(style = 'caption-side: bottom; text-align: center;','Sursa tabel: JHU CCSE.')) %>%
   DT::formatPercentage("recover_rate", 2) %>%
-  DT::formatPercentage("death_rate", 2)  
+  DT::formatPercentage("death_rate", 2)
 ```
 
 
@@ -525,4 +527,4 @@ Acestea sunt actualizate zilnic, dar acest dashboard se actualizeaza la cateva z
 Date disponibile din `r format(max(coronavirus$date), "%A %B %d, %Y")`. Dashboardul a fost actualizat ultima oara:`r format(Sys.time(), "%A %B %d, %Y")`.
 <br>
 
-Pentru alte proiecte de R, ma gasesti pe [pagina mea personala](https://www.ineszz.rbind.io/).
+Pentru alte proiecte de R, ma gasesti pe [pagina mea personala](https://ineszz.rbind.io/).
