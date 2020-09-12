@@ -325,6 +325,7 @@ Sursa date
     
 ```{r}
 df_daily %>%
+  dplyr::select(c("date", "confirmed", "recovered", "death","daily_confirmed_5D","daily_confirmed_7D","daily_confirmed_14D", "recover_rate", "death_rate")) %>% 
   DT::datatable(rownames = FALSE,
             class = 'cell-border stripe',
             colnames = c("Date", "Confirmed", "Recovered", "Death","Daily_confirmed_5D","Daily_confirmed_7D","Daily_confirmed_14D", "Recover Rate", "Death Rate"),
