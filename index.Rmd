@@ -1,5 +1,5 @@
 ---
-title: covid-2020-Romania
+title: Romania covid-19 Dashboard
 
 output: 
   flexdashboard::flex_dashboard:
@@ -12,7 +12,6 @@ output:
 ```{r setup, include=FALSE}
 #------------------ Packages ------------------
 library(flexdashboard)
-
 #install.packages("devtools")
 #devtools::install_github("RamiKrispin/coronavirus", force = TRUE)
 
@@ -97,15 +96,20 @@ df_daily <- coronavirus %>%
       death_rate = round((death / confirmed),digits = 4)
       )
 df_daily <-df_daily %>% dplyr::arrange(desc(date))
-                         
+
+dft <- df_daily %>%
+    dplyr::select(c("date", "confirmed", "recovered", "death","daily_confirmed_5D","daily_confirmed_7D","daily_confirmed_14D","recover_rate", "death_rate")) %>% 
+  dplyr::filter(confirmed>0 | recovered>0 | death>0)
+
 df1 <- coronavirus %>% dplyr::filter(date == max(date))
+
 
 ```
 
-Sumar
-====
+
 Row
 -----------------------------------------------------------------------
+
 
 ### confirmed {.value-box}
 
@@ -193,7 +197,7 @@ plotly::plot_ly(data = df_daily,
                  hovermode = "compare")
 ```
 
-### Distributia cazurile totale
+### Distributia cazurilor totale
 
 ```{r}
 plotly::plot_ly(data = df_daily,
@@ -217,7 +221,7 @@ plotly::plot_ly(data = df_daily,
          hovermode = "compared")
 ```
 
-### Evolutia cumulativa a cazurilor confirmate
+### Evolutia cazurilor cumulativ
 
 ```{r}
 plotly::plot_ly(data = df_daily) %>%
@@ -226,7 +230,7 @@ plotly::plot_ly(data = df_daily) %>%
     y = ~confirmed_cum,
     type = "scatter",
     mode = "lines+markers",
-    name = "Confirmed",
+    name = "Confirmati",
     line = list(color = active_color),
     marker = list(color = active_color)
   ) %>%
@@ -235,14 +239,14 @@ plotly::plot_ly(data = df_daily) %>%
     y = ~death_cum,
     type = "scatter",
     mode = "lines+markers",
-    name = "Death",
+    name = "Decedati",
     line = list(color = death_color),
     marker = list(color = death_color)
   ) %>%
   plotly::add_annotations(
     x = as.Date("2020-02-04"),
     y = 1,
-    text = paste("First case"),
+    text = paste("Primul caz"),
     xref = "x",
     yref = "y",
     arrowhead = 5,
@@ -297,7 +301,7 @@ plotly::plot_ly(data = df_daily) %>%
   ) %>%
     plotly::add_annotations(
     x = as.Date("2020-08-02"),
-    y = 90,
+    y = 120,
     text = paste(
       "Masuri Noi"
     ),
@@ -310,6 +314,21 @@ plotly::plot_ly(data = df_daily) %>%
     ax = -20,
     ay = -150
   ) %>%
+    plotly::add_annotations(
+    x = as.Date("2020-09-14"),
+    y = 140,
+    text = paste(
+      "Deschiderea scolilor"
+    ),
+    xref = "x",
+    yref = "y",
+    arrowhead = 5,
+    arrowhead = 3,
+    arrowsize = 1,
+    showarrow = TRUE,
+    ax = -10,
+    ay = -200
+  ) %>%
   plotly::layout(
     title = "",
     yaxis = list(title = "Numar de cazuri cumulativ"),
@@ -320,33 +339,8 @@ plotly::plot_ly(data = df_daily) %>%
 ```
 
 
-Sursa date
-===
-    
-```{r}
-df_daily %>%
-  dplyr::select(c("date", "confirmed", "recovered", "death","daily_confirmed_5D","daily_confirmed_7D","daily_confirmed_14D", "recover_rate", "death_rate")) %>% 
-  DT::datatable(rownames = FALSE,
-            class = 'cell-border stripe',
-            colnames = c("Date", "Confirmed", "Recovered", "Death","Daily_confirmed_5D","Daily_confirmed_7D","Daily_confirmed_14D", "Recover Rate", "Death Rate"),
-            options = list(autowidth = TRUE,
-                           dom = 'Blfrtip',
-                           searchHighlight = TRUE,
-                           pageLength = 14,
-                           buttons = c('copy', 'csv')),
-            caption = htmltools::tags$caption(style = 'caption-side: bottom; text-align: center;','Sursa tabel: JHU CCSE.')) %>%
-  DT::formatPercentage("recover_rate", 2) %>%
-  DT::formatPercentage("death_rate", 2)
-```
 
-
-Comparatii
-=======================================================================
-
-Column {.tabset}
--------------------------------------
-
-### **Cazuri confirmate zilnic - tari vecine sau cu risc**
+### Cazuri confirmate zilnic - tari vecine sau cu risc
     
 ```{r}
 daily_confirmed <- coronavirus %>%
@@ -403,7 +397,7 @@ daily_confirmed %>%
   )
 ```
  
-### **Distributia cazurilor dupa tipul lor**
+### Distributia cazurilor dupa tipul lor
 
 ```{r}
 df_EU <- coronavirus %>%
@@ -446,73 +440,65 @@ plotly::plot_ly(
 ```
 
 
-Harta
-=======================================================================
+### Date
 
-### ** Cazuri in lume** (*foloseste iconitele + sau - pentru zoom in/out | sectiune wip*)
-
+    
 ```{r}
-# map tab added by Art Steinmetz
-library(leaflet)
-library(leafpop)
-library(purrr)
-cv_data_for_plot <- coronavirus %>%
-  dplyr::filter(cases > 0) %>%
-  dplyr::group_by(country, province, lat, long, type) %>%
-  dplyr::summarise(cases = sum(cases)) %>%
-  dplyr::mutate(log_cases = 2 * log(cases)) %>%
-  dplyr::ungroup()
-cv_data_for_plot.split <- cv_data_for_plot %>% split(cv_data_for_plot$type)
-pal <- colorFactor(c("orange", "red", "green"), domain = c("confirmed", "death", "recovered"))
-map_object <- leaflet() %>% addProviderTiles(providers$Stamen.Toner)
-names(cv_data_for_plot.split) %>%
-  purrr::walk(function(df) {
-    map_object <<- map_object %>%
-      addCircleMarkers(
-        data = cv_data_for_plot.split[[df]],
-        lng = ~long, lat = ~lat,
-        color = ~ pal(type),
-        stroke = FALSE,
-        fillOpacity = 0.8,
-        radius = ~log_cases,
-        popup = leafpop::popupTable(cv_data_for_plot.split[[df]],
-          feature.id = FALSE,
-          row.numbers = FALSE,
-          zcol = c("type", "cases", "country", "province")
-        ),
-        group = df,
-        labelOptions = labelOptions(
-          noHide = F,
-          direction = "auto"
-        )
-      )
-  })
-map_object %>%
-  addLayersControl(
-    overlayGroups = names(cv_data_for_plot.split),
-    options = layersControlOptions(collapsed = FALSE)
-  )
+bar_chart <- function(label, width = "100%", height = "14px", fill = "#00bfc4", background = NULL) {
+            bar <- htmltools::div(style = list(background = fill, width = width, height = height))
+            chart <- htmltools::div(style = list(flexGrow = 1, marginLeft = "6px", background = background), bar)
+  htmltools::div(style = list(display = "flex", alignItems = "center"), label, chart)
+}
+
+
+tbl <- reactable::reactable(dft,
+                            pagination = FALSE,
+                            highlight = TRUE,
+                            height = 400,
+                            sortable = TRUE,
+                            borderless = TRUE,
+                            defaultPageSize = nrow(dft),
+                            defaultSortOrder = "desc",
+                            defaultSorted = "date",
+                            columns = list(
+date = reactable::colDef(name = "Data", minWidth = 50, maxWidth = 100),
+confirmed = reactable::colDef(name = "Confirmati",  minWidth = 50, maxWidth = 100),
+recovered = reactable::colDef(name = "Vindecati",  minWidth = 50, maxWidth = 100),
+death = reactable::colDef(name = "Decese",  minWidth = 50, maxWidth = 100),
+daily_confirmed_5D = reactable::colDef(name = "Vindecati la @5zile",  minWidth = 50, maxWidth = 100),
+daily_confirmed_7D = reactable::colDef(name = "Vindecati la @7zile",  minWidth = 50, maxWidth = 100),
+daily_confirmed_14D = reactable::colDef(name = "Vindecati la @14zile",  minWidth = 50, maxWidth = 100),
+recover_rate = reactable::colDef(name = "Rata Vindecati",  minWidth = 50, maxWidth = 200, defaultSortOrder = "desc",
+cell = function(value) {
+                     # Format as percentages with 1 decimal place
+                     value <- paste0(format(round(value * 100, 2), nsmall = 1), "%")
+                     bar_chart(value, width = value, fill = "green", background ="#e1e1e1") },  align = "left"),
+death_rate = reactable::colDef(name = "Rata decese",  minWidth = 50, maxWidth = 200,
+                      defaultSortOrder = "desc",cell = function(value) {
+                     # Format as percentages with 1 decimal place
+                     value <- paste0(format(round(value * 100, 2), nsmall = 1), "%")
+                     bar_chart(value, width = value, fill = "red", background = "#e1e1e1") }, align = "left"))
+)
+
+htmltools::div(class = "standings",
+    paste("Click pe numele coloanei pentru a rearanja datele in tabel. Ultimul update al datelor a fost: ", max(dft$date)),
+  tbl
+)
+
+
 ```
 
 
-
-
-
-Despre
-=======================================================================
+### Despre
 
 Acest dashboard este o replica inspirata de [articolul](https://www.statsandr.com/blog/how-to-create-a-simple-coronavirus-dashboard-specific-to-your-country-in-r/){target="_blank"} lui [Antoine Soetewey](https://www.antoinesoetewey.com).
 
 
 Ulterior, dashboardurile dezvoltate de [Rami Krispin](https://ramikrispin.github.io/coronavirus_dashboard/){target="_blank"}, cat si pachetele de date COVID-19 au reprezentat un punct de explorare al pachetului R ['{flexdashboard}'](http://rmarkdown.rstudio.com/flexdashboard).
 
-**Code**
+**Code** Codul este scris folosind R.
 
-Codul este scris folosind R si frameworkul RMarkdown, disponibil pe github.
-
-**Data**
-
-Momentan folosesc datele disponibile in pachetul de dezvoltare, dar initial s-au folosit date de intrare din pachetul R [`{coronavirus}`](https://github.com/RamiKrispin/coronavirus){target="_blank"}. 
+**Data** Momentan folosesc datele disponibile in pachetul de dezvoltare, dar initial s-au folosit date de intrare din pachetul R [`{coronavirus}`](https://github.com/RamiKrispin/coronavirus){target="_blank"}. 
 
 ```
 install.packages("devtools")
@@ -523,9 +509,7 @@ Datele brute au sursa datele de la Johns Hopkins University Center for Systems S
 Acestea sunt actualizate zilnic, dar acest dashboard se actualizeaza la cateva zile, manual.
 
 
-**Ultimul update**
-
-Date disponibile din `r format(max(coronavirus$date), "%A %B %d, %Y")`. Dashboardul a fost actualizat ultima oara:`r format(Sys.time(), "%A %B %d, %Y")`.
+**Ultimul update** Dashboardul a fost actualizat ultima oara in data de `r format(Sys.time(), "%b %d, %Y")`. Datele raportate sunt pana la data de `r format(max(coronavirus$date), "%b %d, %Y")`
 <br>
 
-Pentru alte proiecte de R, ma gasesti pe [pagina mea personala](https://ineszz.rbind.io/).
+Pentru alte proiecte de R, ma gasesti pe [pagina mea personala](https://ineszz.rbind.io/blog/?utm_source=referral&utm_medium=link&utm_campaign=covid-19-ro-dash/).
