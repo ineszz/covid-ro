@@ -465,9 +465,9 @@ date = reactable::colDef(name = "Data", minWidth = 50, maxWidth = 100),
 confirmed = reactable::colDef(name = "Confirmati",  minWidth = 50, maxWidth = 100),
 recovered = reactable::colDef(name = "Vindecati",  minWidth = 50, maxWidth = 100),
 death = reactable::colDef(name = "Decese",  minWidth = 50, maxWidth = 100),
-daily_confirmed_5D = reactable::colDef(name = "Vindecati la @5zile",  minWidth = 50, maxWidth = 100),
-daily_confirmed_7D = reactable::colDef(name = "Vindecati la @7zile",  minWidth = 50, maxWidth = 100),
-daily_confirmed_14D = reactable::colDef(name = "Vindecati la @14zile",  minWidth = 50, maxWidth = 100),
+daily_confirmed_5D = reactable::colDef(name = "Confirmati la @5zile",  minWidth = 50, maxWidth = 100),
+daily_confirmed_7D = reactable::colDef(name = "Confirmati la @7zile",  minWidth = 50, maxWidth = 100),
+daily_confirmed_14D = reactable::colDef(name = "Confirmati la @14zile",  minWidth = 50, maxWidth = 100),
 recover_rate = reactable::colDef(name = "Rata Vindecati",  minWidth = 50, maxWidth = 200, defaultSortOrder = "desc",
 cell = function(value) {
                      # Format as percentages with 1 decimal place
